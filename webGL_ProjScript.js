@@ -13,13 +13,13 @@ var initEngine = function()
         webGL = canvas.getContext('Experimental-webGL');
     }
 
-    if (!wbeGL)
+    if (!webGL)
     {
         console.log("Failed second time - WebGL not supported on this browser");
     }
 
-    gl.clearColor (0.75, 0.85, 0.8, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    webGL.clearColor (0.75, 0.85, 0.8, 1.0);
+    webGL.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Step2 - Update World Model
 
