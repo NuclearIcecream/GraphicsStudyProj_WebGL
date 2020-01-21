@@ -5,11 +5,13 @@ var initEngine = function()
     // Step1 - Initialize WebGL
     // ++++++++++++++++++++++++++
     var canvas = document.getElementById('WebGL_Canvas');
+    canvas.width = 1200;
+    canvas.height = 900;
     var webGL = canvas.getContext('webgl');
 
     if (!webGL)
     {
-        console.log("WebGL not supported, falling back to other version");
+        console.log("WebGL not supported, falling back to older version");
         webGL = canvas.getContext('Experimental-webGL');
     }
 
