@@ -2,32 +2,30 @@
 // The Shaders
 //
 
-var vertexShader =
-[ 
-    '#version 300 es',
-    '',
-    'precision mediump float;',
-    '',
-    'attribute vec4 positionMat;',
-    '',
-    'void main()',
-    '{',
-    '   gl_Position = positionMat;',
-    '}'
-].join('\n')
+var vertexShader = `
+    #version 300 es
 
-var fragmentShader =
-[
-    '#version 300 es',
-    '',
-    'precision mediump float;',
-    '',
-    'out vec4 outColor;',
-    'void main()',
-    '{',
-    'outColor = vec4(1, 0, 0.5, 1);',
-    '}'
-].join('\n')
+    precision mediump float;
+
+    attribute vec2 vertPosition;
+
+    void main() {
+    gl_Position = vec4(vertPosition, 0.0, 1.0);
+    }
+`;
+
+var fragmentShader = `
+    #version 300 es
+
+    precision mediump float;
+
+    out vec4 outColor;
+
+    void main()
+    {
+    outColor = vec4(1, 0, 0.5, 1);
+    }
+`;
 
 // function to create the shaders
 function createShader (gl, type, source)
