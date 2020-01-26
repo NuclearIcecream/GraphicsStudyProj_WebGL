@@ -2,28 +2,26 @@
 // The Shaders
 //
 
-var vertexShader = `
-    #version 300 es
-
+var vertexShaderCode = 
+`#version 300 es
     precision mediump float;
 
-    attribute vec2 vertPosition;
+    in vec2 vertPosition;
 
     void main() {
-    gl_Position = vec4(vertPosition, 0.0, 1.0);
+        gl_Position = vec4(vertPosition, 0.0, 1.0);
     }
 `;
 
-var fragmentShader = `
-    #version 300 es
+var fragmentShaderCode = 
+`#version 300 es
 
     precision mediump float;
 
     out vec4 outColor;
 
-    void main()
-    {
-    outColor = vec4(1, 0, 0.5, 1);
+    void main() {
+        outColor = vec4(1, 0, 0.5, 1);
     }
 `;
 
@@ -62,46 +60,45 @@ var initEngine = function()
 {
     console.log('Script Working');
     // ++++++++++++++++++++++++++
-    // Step1 - Initialize WebGL
+    //  Initialize WebGL
     // ++++++++++++++++++++++++++
     var canvas = document.getElementById('WebGL_Canvas');
-    // canvas.width = 1200;
-    //canvas.height = 900;
-    var gl = canvas.getContext('webgl');
+    canvas.width = 1200;
+    canvas.height = 900;
+    var gl = canvas.getContext('webgl2');
 
-    //if (!webGL)
-    //{
-    //    console.log("WebGL not supported, falling back to older version");
-    //    webGL = canvas.getContext('Experimental-webGL');
-    //}
+    if (!gl)
+    {
+        console.log("WebGL not supported, falling back to older version");
+        gl = canvas.getContext('Experimental-webGL');
+    }
 
-    //if (!webGL)
-    //{
-    //    console.log("Failed second time - WebGL not supported on this browser");
-    //}
+    if (!gl)
+    {
+        console.log("Failed second time - WebGL not supported on this browser");
+    }
 
-    //webGL.clearColor (0.75, 0.85, 0.8, 1.0);
-    //webGL.clear(webGL.COLOR_BUFFER_BIT | webGL.DEPTH_BUFFER_BIT);
+    gl.clearColor (0.75, 0.85, 0.8, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // init shaders
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShader);
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShader);
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderCode);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderCode);
 
     // init program
     var program = createProgram(gl, vertexShader, fragmentShader);
 
-    var positionAttriLocation = gl.getAttributeLocation(program, "positionMat");
-
-    var positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    var positionAttriLocation = gl.getAttribLocation(program, "vertPosition");
     
     // 3 2D points
-    var positions = [
-        0, 0,
+    var positions = new Float32Array([
+        -0.3, 0,
         0, 0.5,
-        0.7, 0,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        0.3, 0,
+    ]);
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
 
     var vertArrayObj = gl.createVertexArray();
 
@@ -118,11 +115,11 @@ var initEngine = function()
     gl.vertexAttribPointer(positionAttriLocation, size, type, normalize, stride, offset);
 
     // Canvas settings
-    webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+    //webglUtils.resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     // clear canvas
-    webGL.clearColor (0.75, 0.85, 0.8, 1.0);
+    gl.clearColor (0.75, 0.85, 0.8, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     // tell program to use shaders
@@ -136,15 +133,4 @@ var initEngine = function()
     var offset = 0;
     var count = 3;
     gl.drawArrays(primitiveType, offset, count);
-
-    // Step2 - Update World Model
-
-    // Step3 - Set Attributes
-
-    // Step4 - The settings (set buffers, uniforms, textures, program)
-
-    // Step5 - Issue Draw Call
-
-    // Step6 - Present Frame
-
 }
