@@ -55,6 +55,35 @@ function createProgram(gl, vertexShader, fragmentShader)
     gl.deleteProgram(program);
 }
 
+function getGraphicsData ()
+{
+    // THE CUBE
+    // Each has to be two vertices
+    var graphicsMatrix = new Float32Array([
+        // Top face
+        // 1st vert
+        -0.2, 0.2, 2.0,
+        -0.2, -0.2, 0.2,
+        0.2, -0.2, 0.2,
+        // 2nd vert
+        -0.2, 0.2, 0.2,
+        0.2, -0.2, 0.2,
+        0.2, 0.2, 0.2,
+
+        // Front face
+
+        // left Face
+
+        // Right face
+
+        // Bottom Face
+
+
+    ]);
+
+    return graphicsMatrix;
+}
+
 // the actual script
 var initEngine = function()
 {
@@ -113,6 +142,8 @@ var initEngine = function()
     var offset = 0;         // start at the beginning of the buffer
 
     gl.vertexAttribPointer(positionAttriLocation, size, type, normalize, stride, offset);
+
+    var graphicsData = getGraphicsData();
 
     // Canvas settings
     //webglUtils.resizeCanvasToDisplaySize(gl.canvas);
