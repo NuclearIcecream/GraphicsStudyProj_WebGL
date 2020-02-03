@@ -358,12 +358,12 @@ function projection (width, height, depth) {
 
 var initEngine = function () {
 
-    var vertexShaderCode = fetch('/shaders.vs.glsl', {mode: 'no-cors'})
+    var vertexShaderCode = fetch('shaders.vs.glsl', {mode: 'no-cors'})
         .then(response => response.text())
         .then(data => console.log(data))
         .then(error => console.error(error));
 
-    var fragmentShaderCode = fetch('/shaders.fs.glsl', {mode: 'no-cors'})
+    var fragmentShaderCode = fetch('shaders.fs.glsl', {mode: 'no-cors'})
         .then(response => response.text())
         .then(data => console.log(data))
         .then(error => console.error(error));
