@@ -372,11 +372,11 @@ var initEngine = function () {
                             console.log(data);
                             runEngine(vertexShaderCode, fragmentShaderCode);
                         })
-                        .catch(error => console.error(error));
+                        //.catch(error => console.error(error));
                 }) 
-                .catch(error => console.error(error));
+                //.catch(error => console.error(error));
         })
-        .catch(error => console.error(error));
+        //.catch(error => console.error(error));
 };
 
 
