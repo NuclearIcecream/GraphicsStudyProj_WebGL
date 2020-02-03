@@ -360,22 +360,23 @@ var initEngine = function () {
 
     var vertexShaderCode = fetch('shaders.vs.glsl', {mode: 'no-cors'})
         .then(response => response.text())
-        .then(data => console.log(data))
+        .then(function(data) {
+            console.log(data)
+            var fragmentShaderCode = fetch('shaders.fs.glsl', {mode: 'no-cors'})
+                .then(response => response.text())
+                .then(function (data) {
+                    console.log(data)
+                    var modelJSON = fetch('Aya_model.json', {mode: 'no-cors'})
+                        .then(response => response.json())
+                        .then(function (data) {
+                            console.log(data)
+                            runEngine(vertexShaderCode, fragmentShaderCode);
+                        })
+                        .catch(error => console.error(error));
+                }) 
+                .catch(error => console.error(error));
+        })
         .catch(error => console.error(error));
-
-    var fragmentShaderCode = fetch('shaders.fs.glsl', {mode: 'no-cors'})
-        .then(response => response.text())
-        .then(data => console.log(data))
-        .catch(error => console.error(error));
-
-    var modelJSON = fetch('Aya_model.json', {mode: 'no-cors'})
-        .then(response => response.json())
-        .then(data=> console.log(data))
-        .catch(error => console.error(error));
-
-    
-
-    runEngine(vertexShaderCode, fragmentShaderCode);
 };
 
 
