@@ -368,7 +368,7 @@ var initEngine = function () {
         .then(data => console.log(data))
         .then(error => console.error(error));
 
-    var modelJSON = fetch('/Aya_model.json', {mode: 'no-cors'})
+    var modelJSON = fetch('Aya_model.json', {mode: 'no-cors'})
         .then(response => response.json())
         .then(data=> console.log(data))
         .catch(error => console.error(error));
