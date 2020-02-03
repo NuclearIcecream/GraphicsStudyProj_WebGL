@@ -31,8 +31,8 @@ void main()
 {
     outColor = v_color;
 }
-`
-*/
+`*/
+
 
 var modelJSON;
 
@@ -360,11 +360,11 @@ var initEngine = function () {
 
     var vertexShaderCode = fetch('shaders.vs.glsl', {mode: 'no-cors'})
         .then(response => response.text())
-        .then(function(data) {
+        .then(function(data, vertexShaderCode) {
             console.log(data);
             var fragmentShaderCode = fetch('shaders.fs.glsl', {mode: 'no-cors'})
                 .then(response => response.text())
-                .then(function (data) {
+                .then(function (data, vertexShaderCode, fragmentShaderCode) {
                     console.log(data);
                     var modelJSON = fetch('Aya_model.json', {mode: 'no-cors'})
                         .then(response => response.json())
@@ -381,7 +381,7 @@ var initEngine = function () {
 
 
 // the actual script
-var runEngine = function(vertexShaderCode, fragmentShaderCode)
+var initEngine = function(vertexShaderCode, fragmentShaderCode)
 {
     console.log('Script Working');
     // ++++++++++++++++++++++++++
