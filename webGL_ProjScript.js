@@ -1,40 +1,3 @@
-// 
-// The Shaders
-//
-
-var vertexShaderCode = 
-`#version 300 es
-    // Vertice position
-    in vec4 vertPosition;
-    in vec4 a_color;
-
-    // matrix to hold transform data
-    uniform mat4 transformMatrix;
-
-    // varying for the color
-    out vec4 v_color;
-
-    void main() {
-        gl_Position = transformMatrix * vertPosition;
-
-        // pass color to frag shader
-        v_color = a_color;
-    }
-`;
-
-var fragmentShaderCode = 
-`#version 300 es
-
-    precision mediump float;
-
-    in vec4 v_color;
-
-    out vec4 outColor;
-
-    void main() {
-        outColor = v_color;
-    }
-`;
 
 // function to create the shaders
 function createShader (gl, type, source)
@@ -356,18 +319,37 @@ function projection (width, height, depth) {
     ];
 }
 
-function drawStuff(gl, program, vao, matrixLocation, translation, rotation, scale) 
+var initEngine = function ()
 {
-
+    loadTextResource('/shader.vs-glsl', function (vsErr, vsText)
+    {
+        if (vsErr)
+        {
+            alert('Error getting vertex shader');
+            console.error(vsErr);
+        } else {
+            loadTextResource('/shader.fs-glsl', function (fsErr, fsText)
+            {
+                if (fsErr) 
+                {
+                    alert('Error getting fragment shader');
+                    console.error(fsErr);
+                } else {
+                    runEngine (vsText, fsText);
+                }
+            });
+        }
+    });
 }
 
 // the actual script
-var initEngine = function()
+var runEngine = function(vertexShaderCode, fragmentShaderCode)
 {
     console.log('Script Working');
     // ++++++++++++++++++++++++++
     //  Initialize WebGL
     // ++++++++++++++++++++++++++
+
     var canvas = document.getElementById('WebGL_Canvas');
     canvas.width = 1200;
     canvas.height = 900;
