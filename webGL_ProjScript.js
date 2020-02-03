@@ -1,3 +1,40 @@
+/*
+var vertexShaderCode = `#version 300 es
+// Vertice position
+in vec4 vertPosition;
+in vec4 a_color;
+
+// matrix to hold transform data
+uniform mat4 transformMatrix;
+
+// varying for the color
+out vec4 v_color;
+
+void main()
+{
+    gl_Position = transformMatrix * vertPosition;
+
+    // pass color to frag shader
+    v_color = a_color;
+}
+`
+
+var fragmentShaderCode = `#version 300 es
+
+precision mediump float;
+
+in vec4 v_color;
+
+out vec4 outColor;
+
+void main() 
+{
+    outColor = v_color;
+}
+`
+*/
+
+var modelJSON;
 
 // function to create the shaders
 function createShader (gl, type, source)
@@ -319,28 +356,28 @@ function projection (width, height, depth) {
     ];
 }
 
-var initEngine = function ()
-{
-    loadTextResource('/shader.vs-glsl', function (vsErr, vsText)
-    {
-        if (vsErr)
-        {
-            alert('Error getting vertex shader');
-            console.error(vsErr);
-        } else {
-            loadTextResource('/shader.fs-glsl', function (fsErr, fsText)
-            {
-                if (fsErr) 
-                {
-                    alert('Error getting fragment shader');
-                    console.error(fsErr);
-                } else {
-                    runEngine (vsText, fsText);
-                }
-            });
-        }
-    });
-}
+var initEngine = function () {
+
+    var vertexShaderCode = fetch('/shaders.vs.glsl', {mode: 'no-cors'})
+        .then(response => response.text())
+        .then(data => console.log(data))
+        .then(error => console.error(error));
+
+    var fragmentShaderCode = fetch('/shaders.fs.glsl', {mode: 'no-cors'})
+        .then(response => response.text())
+        .then(data => console.log(data))
+        .then(error => console.error(error));
+
+    var modelJSON = fetch('/Aya_model.json', {mode: 'no-cors'})
+        .then(response => response.json())
+        .then(data=> console.log(data))
+        .catch(error => console.error(error));
+
+    
+
+    runEngine(vertexShaderCode, fragmentShaderCode);
+};
+
 
 // the actual script
 var runEngine = function(vertexShaderCode, fragmentShaderCode)
