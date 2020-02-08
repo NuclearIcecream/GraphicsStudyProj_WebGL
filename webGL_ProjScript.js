@@ -322,6 +322,7 @@ function projection (width, height, depth) {
     ];
 }
 
+// This function just makes sure external data loads in correctly
 var initEngine = function () {
 
     async function getVSShader () {
@@ -349,8 +350,8 @@ var initEngine = function () {
 };
 
 
-// the actual script
-var initEngine = function(vertexShaderCode, fragmentShaderCode)
+// the actual script {was initEngine}
+var runEngine = function(vertexShaderCode, fragmentShaderCode)
 {
     console.log('Script Working');
     // ++++++++++++++++++++++++++
