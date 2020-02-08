@@ -350,7 +350,7 @@ var initEngine = function () {
 
 
 // the actual script
-var runEngine = function(vertexShaderCode, fragmentShaderCode)
+var initEngine = function(vertexShaderCode, fragmentShaderCode)
 {
     console.log('Script Working');
     // ++++++++++++++++++++++++++
