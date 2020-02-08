@@ -1,39 +1,3 @@
-/*
-var vertexShaderCode = `#version 300 es
-// Vertice position
-in vec4 vertPosition;
-in vec4 a_color;
-
-// matrix to hold transform data
-uniform mat4 transformMatrix;
-
-// varying for the color
-out vec4 v_color;
-
-void main()
-{
-    gl_Position = transformMatrix * vertPosition;
-
-    // pass color to frag shader
-    v_color = a_color;
-}
-`
-
-var fragmentShaderCode = `#version 300 es
-
-precision mediump float;
-
-in vec4 v_color;
-
-out vec4 outColor;
-
-void main() 
-{
-    outColor = v_color;
-}
-`
-*/
-
 var modelJSON;
 
 // function to create the shaders
@@ -46,6 +10,8 @@ function createShader (gl, type, source)
     var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
     if (success)
     {return shader;}
+
+    console.log(shader);
 
     console.log(gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
@@ -358,24 +324,28 @@ function projection (width, height, depth) {
 
 var initEngine = function () {
 
-    var vertexShaderCode = fetch('/shaders.vs.glsl', {mode: 'no-cors'})
-        .then(response => response.text())
-        .then(data => console.log(data))
-        .then(error => console.error(error));
+    async function getVSShader () {
+        const response = await fetch('/shaders.vs.glsl');
+        return await response.text();
+    };
 
-    var fragmentShaderCode = fetch('/shaders.fs.glsl', {mode: 'no-cors'})
-        .then(response => response.text())
-        .then(data => console.log(data))
-        .then(error => console.error(error));
+    async function getFSShader () {
+        const response = await fetch('/shaders.fs.glsl');
+        return await response.text();
+    };
 
-    var modelJSON = fetch('/Aya_model.json', {mode: 'no-cors'})
-        .then(response => response.json())
-        .then(data=> console.log(data))
-        .catch(error => console.error(error));
+    async function getModel () {
+        const response = await fetch('/Aya_model.json');
+        return await response.json();
+    };
 
-    
+    function getData () {
+        return Promise.all ([getVSShader(), getFSShader(), getModel()])
+    };
 
-    runEngine(vertexShaderCode, fragmentShaderCode);
+    getData ().then (([vertexShaderCode, fragmentShaderCode, modelData]) => {
+        runEngine(vertexShaderCode, fragmentShaderCode);
+    });
 };
 
 
@@ -495,7 +465,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode)
 
         // Convert from clipspace to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        console.log ("Width: " + gl.canvas.width + ", Height: " + gl.canvas.height);
+        //console.log ("Width: " + gl.canvas.width + ", Height: " + gl.canvas.height);
 
         // clear canvas
         gl.clearColor (0.70, 0.85, 0.8, 1.0);
