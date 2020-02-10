@@ -1,39 +1,3 @@
-/*
-var vertexShaderCode = `#version 300 es
-// Vertice position
-in vec4 vertPosition;
-in vec4 a_color;
-
-// matrix to hold transform data
-uniform mat4 transformMatrix;
-
-// varying for the color
-out vec4 v_color;
-
-void main()
-{
-    gl_Position = transformMatrix * vertPosition;
-
-    // pass color to frag shader
-    v_color = a_color;
-}
-`
-
-var fragmentShaderCode = `#version 300 es
-
-precision mediump float;
-
-in vec4 v_color;
-
-out vec4 outColor;
-
-void main() 
-{
-    outColor = v_color;
-}
-`*/
-
-
 var modelJSON;
 
 // function to create the shaders
@@ -46,6 +10,8 @@ function createShader (gl, type, source)
     var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
     if (success)
     {return shader;}
+
+    console.log(shader);
 
     console.log(gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
@@ -66,143 +32,7 @@ function createProgram(gl, vertexShader, fragmentShader)
     gl.deleteProgram(program);
 }
 
-function getGraphicsData ()
-{
-    // an F
-    // Each has to be two vertices
-    var graphicsMatrix = new Float32Array([
-           // left column front
-          0,   0,  0,
-          0, 150,  0,
-          30,   0,  0,
-          0, 150,  0,
-          30, 150,  0,
-          30,   0,  0,
-
-          // top rung front
-          30,   0,  0,
-          30,  30,  0,
-          100,   0,  0,
-          30,  30,  0,
-          100,  30,  0,
-          100,   0,  0,
-
-          // middle rung front
-          30,  60,  0,
-          30,  90,  0,
-          67,  60,  0,
-          30,  90,  0,
-          67,  90,  0,
-          67,  60,  0,
-
-          // left column back
-            0,   0,  30,
-           30,   0,  30,
-            0, 150,  30,
-            0, 150,  30,
-           30,   0,  30,
-           30, 150,  30,
-
-          // top rung back
-           30,   0,  30,
-          100,   0,  30,
-           30,  30,  30,
-           30,  30,  30,
-          100,   0,  30,
-          100,  30,  30,
-
-          // middle rung back
-           30,  60,  30,
-           67,  60,  30,
-           30,  90,  30,
-           30,  90,  30,
-           67,  60,  30,
-           67,  90,  30,
-
-          // top
-            0,   0,   0,
-          100,   0,   0,
-          100,   0,  30,
-            0,   0,   0,
-          100,   0,  30,
-            0,   0,  30,
-
-          // top rung right
-          100,   0,   0,
-          100,  30,   0,
-          100,  30,  30,
-          100,   0,   0,
-          100,  30,  30,
-          100,   0,  30,
-
-          // under top rung
-          30,   30,   0,
-          30,   30,  30,
-          100,  30,  30,
-          30,   30,   0,
-          100,  30,  30,
-          100,  30,   0,
-
-          // between top rung and middle
-          30,   30,   0,
-          30,   60,  30,
-          30,   30,  30,
-          30,   30,   0,
-          30,   60,   0,
-          30,   60,  30,
-
-          // top of middle rung
-          30,   60,   0,
-          67,   60,  30,
-          30,   60,  30,
-          30,   60,   0,
-          67,   60,   0,
-          67,   60,  30,
-
-          // right of middle rung
-          67,   60,   0,
-          67,   90,  30,
-          67,   60,  30,
-          67,   60,   0,
-          67,   90,   0,
-          67,   90,  30,
-
-          // bottom of middle rung.
-          30,   90,   0,
-          30,   90,  30,
-          67,   90,  30,
-          30,   90,   0,
-          67,   90,  30,
-          67,   90,   0,
-
-          // right of bottom
-          30,   90,   0,
-          30,  150,  30,
-          30,   90,  30,
-          30,   90,   0,
-          30,  150,   0,
-          30,  150,  30,
-
-          // bottom
-          0,   150,   0,
-          0,   150,  30,
-          30,  150,  30,
-          0,   150,   0,
-          30,  150,  30,
-          30,  150,   0,
-
-          // left side
-          0,   0,   0,
-          0,   0,  30,
-          0, 150,  30,
-          0,   0,   0,
-          0, 150,  30,
-          0, 150,   0,
-      ])
-
-    return graphicsMatrix;
-}
-
+//
 function getColorData()
 {
     var vertColors = new Float32Array([
@@ -356,33 +186,45 @@ function projection (width, height, depth) {
     ];
 }
 
+// This function just makes sure external data loads in correctly
 var initEngine = function () {
 
-    var vertexShaderCode = fetch('shaders.vs.glsl', {mode: 'no-cors'})
-        .then(response => response.text())
-        .then(function(data, vertexShaderCode) {
-            console.log(data);
-            var fragmentShaderCode = fetch('shaders.fs.glsl', {mode: 'no-cors'})
-                .then(response => response.text())
-                .then(function (data, vertexShaderCode, fragmentShaderCode) {
-                    console.log(data);
-                    var modelJSON = fetch('Aya_model.json', {mode: 'no-cors'})
-                        .then(response => response.json())
-                        .then(function (data) {
-                            console.log(data);
-                            runEngine(vertexShaderCode, fragmentShaderCode);
-                        })
-                        //.catch(error => console.error(error));
-                }) 
-                //.catch(error => console.error(error));
-        })
-        //.catch(error => console.error(error));
+    async function getVSShader () {
+        const response = await fetch('/shaders.vs.glsl');
+        return await response.text();
+    };
+
+    async function getFSShader () {
+        const response = await fetch('/shaders.fs.glsl');
+        return await response.text();
+    };
+
+    async function getModel () {
+        const response = await fetch('/Aya_model.json');
+        return await response.json();
+    };
+
+    async function getImage () {
+        const response = await fetch ('/091_W_Aya_2k_01.jpg')
+        return await response.blob();
+    }
+
+    function getData () {
+        return Promise.all ([getVSShader(), getFSShader(), getModel(), getImage()])
+    };
+
+    getData ().then (([vertexShaderCode, fragmentShaderCode, modelData, textureImageData]) => {
+        runEngine(vertexShaderCode, fragmentShaderCode, modelData, textureImageData);
+    });
 };
 
 
-// the actual script
-var initEngine = function(vertexShaderCode, fragmentShaderCode)
+// the actual script {was initEngine}
+var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, textureImageData)
 {
+
+    modelJSON = inputModelJSON;
+
     console.log('Script Working');
     // ++++++++++++++++++++++++++
     //  Initialize WebGL
@@ -421,65 +263,84 @@ var initEngine = function(vertexShaderCode, fragmentShaderCode)
     /*********************************
      * setting attributes and things *
      *********************************/
-    // lookup mesh attributes
-    var positionAttriLocation = gl.getAttribLocation(program, "vertPosition");
-    var colorLocation = gl.getAttribLocation(program, "a_color")
-
-    // Lookup uniforms
+    
+    // Lookup matrix uniform
     var matLocation = gl.getUniformLocation(program, "transformMatrix");
 
-    // create and bind geo buffer stuff
-    var posBuffer = gl.createBuffer();
-    var vertArrayObj = gl.createVertexArray();
-    gl.bindVertexArray(vertArrayObj);
+    // set geometry data
+    var ayaVertices = inputModelJSON.meshes[0].vertices;
 
-    //gl.bindVertexArray(vertArrayObj);
-    gl.enableVertexAttribArray(positionAttriLocation);
-    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+    var ayaIndices = [].concat.apply([], inputModelJSON.meshes[0].faces);
 
-    // set geo
-    var graphicsData = getGraphicsData();
-    gl.bufferData (gl.ARRAY_BUFFER, graphicsData, gl.STATIC_DRAW);
+    var ayaTexCoords = inputModelJSON.meshes[0].texturecoords[0];
 
+    // Buffer set up
+    var vertBufferObj = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferObj);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ayaVertices), gl.STATIC_DRAW);
+
+    var texCoordsBufferObj = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBufferObj);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ayaTexCoords), gl.STATIC_DRAW);
+
+    var indexBufferObj = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObj);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ayaIndices), gl.STATIC_DRAW);
+
+    // Buffer attribs
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferObj);
+    var positionAttriLocation = gl.getAttribLocation(program, "vertPosition");   
     // define how attribute reads data from the buffer
     var size = 3;           // 3 components per iteration (xyz)
     var type = gl.FLOAT;    // the data is 32bit floats
-    var normalize = false;  // dont normalize the data
-    var stride = 0;         // 0 = move forward size * sizeof(type) each iteration to get next position
+    var normalize = gl.FALSE;  // dont normalize the data
+    var stride = 3 * Float32Array.BYTES_PER_ELEMENT;         // 0 = move forward size * sizeof(type) each iteration to get next position
     var offset = 0;         // start at the beginning of the buffer
-
+    // use above settings
     gl.vertexAttribPointer(positionAttriLocation, size, type, normalize, stride, offset);
+    gl.enableVertexAttribArray(positionAttriLocation);
 
-    // COLOR STUFF
-    var colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBufferObj);
+    var texCoordAttriLocation = gl.getAttribLocation(program, "vertTexCoord");
+    // define how texture attribute stuff is read
+    var size = 2;                                       // size of each iteration
+    var type = gl.FLOAT;                                // each color is 32bit Floats
+    var normalize = gl.FALSE;                           // switch from 255 range to 0 - 1 range
+    var stride = 3 * Float32Array.BYTES_PER_ELEMENT;    // 0 = move forward size * sizeof(type) each iteration to get the next color
+    var offset = 0 * Float32Array.BYTES_PER_ELEMENT;    // start at the begining of buffer
+    // use above settings
+    gl.vertexAttribPointer(texCoordAttriLocation, size, type, normalize, stride, offset);
+    gl.enableVertexAttribArray(texCoordAttriLocation);
 
-    var colorData = getColorData();
-    gl.bufferData (gl.ARRAY_BUFFER, colorData, gl.STATIC_DRAW);
-
-    // turn on color attribute
-    gl.enableVertexAttribArray(colorLocation);
-
-    // define how color attribute stuff if read
-    var size = 3;                   // size of each iteration
-    var type = gl.FLOAT;            // each color is 32bit Floats
-    var normalize = false;          // switch from 255 range to 0 - 1 range
-    var stride = 0;                 // 0 = move forward size * sizeof(type) each iteration to get the next color
-    var offset = 0;                 // start at the begining of buffer
-
-    gl.vertexAttribPointer(colorLocation, size, type, normalize, stride, offset);
-
-    // some vars for initial transforms
-    var translation = [0, 50, -360];
-    var rotation = [degToRad(190), degToRad(40), degToRad(0)];
-    var scale = [1, 1, 1];
-    var fieldOfViewRadians = degToRad(60);
-    var rotateSpeed = 1.2;
     
+    /*
+     * texture stuff
+     */
+    var ayaTexture = gl.createTexture();
+    var img = document.getElementById("AyaImage");
+    gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
+    //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	//gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	//gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap(gl.TEXTURE_2D)
+
+    // some render settings
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
+    gl.frontFace(gl.CCW);
+    gl.cullFace(gl.BACK);
 
     var then = 0;
+
+    // some vars for initial transforms
+    var translation = [0, -100, -750];
+    var rotation = [degToRad(190), degToRad(40), degToRad(180)];
+    var scale = [.3, .3, .3];
+    var fieldOfViewRadians = degToRad(60);
+    var rotateSpeed = 1.2;
 
     requestAnimationFrame(drawStuff);
 
@@ -496,7 +357,7 @@ var initEngine = function(vertexShaderCode, fragmentShaderCode)
 
         // Convert from clipspace to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        console.log ("Width: " + gl.canvas.width + ", Height: " + gl.canvas.height);
+        //console.log ("Width: " + gl.canvas.width + ", Height: " + gl.canvas.height);
 
         // clear canvas
         gl.clearColor (0.70, 0.85, 0.8, 1.0);
@@ -505,16 +366,12 @@ var initEngine = function(vertexShaderCode, fragmentShaderCode)
         // tell program to use shaders
         gl.useProgram(program);
 
-        // bind attri/buffer set
-        gl.bindVertexArray(vertArrayObj);
-
         // perspective settings
         var aspect = gl.canvas.clientWidth/gl.canvas.clientHeight;
         var zNear = 1;
         var zFar = 2000;
 
         // Compute matrix
-
         var matrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
         matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
         matrix = m4.xRotate(matrix, rotation[0]);
@@ -525,11 +382,11 @@ var initEngine = function(vertexShaderCode, fragmentShaderCode)
         // set matrix
         gl.uniformMatrix4fv(matLocation, false, matrix);
 
+        gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
+        gl.activeTexture(gl.TEXTURE0);
+
         // execute GLSL program
-        var primitiveType = gl.TRIANGLES;
-        var offset = 0;
-        var count = 16*6;
-        gl.drawArrays(primitiveType, offset, count);
+        gl.drawElements(gl.TRIANGLES, ayaIndices.length, gl.UNSIGNED_SHORT, 0);
 
         // call next frame
         requestAnimationFrame(drawStuff);
