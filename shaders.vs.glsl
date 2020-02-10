@@ -1,4 +1,7 @@
 #version 300 es
+
+precision mediump float;
+
 // Vertice position
 in vec4 vertPosition;
 in vec2 vertTexCoord;
@@ -14,5 +17,5 @@ void main()
     gl_Position = transformMatrix * vertPosition;
 
     // pass color to frag shader
-    fragTexCoord = vertTexcoord;
+    fragTexCoord = vertTexCoord;
 }
