@@ -1,4 +1,5 @@
-var modelJSON;
+var modelAyaJSON;
+var modelFloorJSON;
 
 // function to create the shaders
 function createShader (gl, type, source)
@@ -30,142 +31,6 @@ function createProgram(gl, vertexShader, fragmentShader)
 
     console.log(gl.getProgramInfoLog(program));
     gl.deleteProgram(program);
-}
-
-//
-function getColorData()
-{
-    var vertColors = new Float32Array([
-        // left column front
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-
-        // top rung front
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-
-        // middle rung front
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-        0.78, 0.27, 0.47,
-
-        // left column back
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-
-        // top rung back
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-
-        // middle rung back
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-        .31, .27, .78,
-
-        // top
-        .27, .78, .82,
-        .27, .78, .82,
-        .27, .78, .82,
-        .27, .78, .82,
-        .27, .78, .82,
-        .27, .78, .82,
-
-        // top rung right
-        .78, .78, .27,
-        .78, .78, .27,
-        .78, .78, .27,
-        .78, .78, .27,
-        .78, .78, .27,
-        .78, .78, .27,
-
-        // under top rung
-        .82, .39, .27,
-        .82, .39, .27,
-        .82, .39, .27,
-        .82, .39, .27,
-        .82, .39, .27,
-        .82, .39, .27,
-
-        // between top rung and middle
-        .82, .62, .27,
-        .82, .62, .27,
-        .82, .62, .27,
-        .82, .62, .27,
-        .82, .62, .27,
-        .82, .62, .27,
-
-        // top of middle rung
-        0.27, 0.70, 0.82,
-        0.27, 0.70, 0.82,
-        0.27, 0.70, 0.82,
-        0.27, 0.70, 0.82,
-        0.27, 0.70, 0.82,
-        0.27, 0.70, 0.82,
-
-        // right of middle rung
-        0.39, 0.27, 0.82,
-        0.39, 0.27, 0.82,
-        0.39, 0.27, 0.82,
-        0.39, 0.27, 0.82,
-        0.39, 0.27, 0.82,
-        0.39, 0.27, 0.82,
-
-        // bottom of middle rung.
-        0.29, 0.82, 0.39,
-        0.29, 0.82, 0.39,
-        0.29, 0.82, 0.39,
-        0.29, 0.82, 0.39,
-        0.29, 0.82, 0.39,
-        0.29, 0.82, 0.39,
-
-        // right of bottom
-        0.54, 0.82, 0.31,
-        0.54, 0.82, 0.31,
-        0.54, 0.82, 0.31,
-        0.54, 0.82, 0.31,
-        0.54, 0.82, 0.31,
-        0.54, 0.82, 0.31,
-
-        // bottom
-        0.35, 0.50, 0.43,
-        0.35, 0.50, 0.43,
-        0.35, 0.50, 0.43,
-        0.35, 0.50, 0.43,
-        0.35, 0.50, 0.43,
-        0.35, 0.50, 0.43,
-
-        // left side
-        0.62, 0.62, 0.86,
-        0.62, 0.62, 0.86,
-        0.62, 0.62, 0.86,
-        0.62, 0.62, 0.86,
-        0.62, 0.62, 0.86,
-        0.62, 0.62, 0.86  
-    ]);
-
-    return vertColors;
 }
 
 function radToDeg(r) {
@@ -225,8 +90,11 @@ var initEngine = function () {
 
 
 // the actual script {was initEngine}
-var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, modelFloorData ,textureImageData)
+var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inputFloorJSON ,textureImageData)
 {
+    modelAyaJSON = inputAyaJSON;
+    modelFloorJSON = inputFloorJSON;
+
     console.log('Script Working');
     // ++++++++++++++++++++++++++
     //  Initialize WebGL
@@ -269,42 +137,48 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, m
     // Lookup matrix uniform
     var matLocation = gl.getUniformLocation(program, "transformMatrix");
 
-    // set Aya geometry data
-    var ayaVertices = inputModelJSON.meshes[0].vertices;
+    // *******************
+    // Get geometry data
+    // *******************
+    // Aya first
+    var ayaVertices = inputAyaJSON.meshes[0].vertices;
+    var ayaIndices = [].concat.apply([], inputAyaJSON.meshes[0].faces);
+    var ayaTexCoords = inputAyaJSON.meshes[0].texturecoords[0];
 
-    var ayaIndices = [].concat.apply([], inputModelJSON.meshes[0].faces);
+    // now floor
+    var floorVertices = inputFloorJSON.meshes[0].vertices;
+    var floorIndices = [].concat.apply([], inputFloorJSON.meshes[0].faces);
+    var floorTexCoords = inputFloorJSON.meshes[0].texturecoords[0];
 
-    var ayaTexCoords = inputModelJSON.meshes[0].texturecoords[0];
+    // make VAOs
+    var ayaVAO = gl.createVertexArray();    // aya vao
+    var floorVAO = gl.createVertexArray();  // floor vao
 
-    // Buffer set up
-    var vertAyaBufferObj = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertAyaBufferObj);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ayaVertices), gl.STATIC_DRAW);
-
-    var texAyaCoordsBufferObj = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, texAyaCoordsBufferObj);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ayaTexCoords), gl.STATIC_DRAW);
-
-    var indexAyaBufferObj = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexAyaBufferObj);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ayaIndices), gl.STATIC_DRAW);
-
-    // Buffer attribs
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertAyaBufferObj);
-    var positionAttriLocation = gl.getAttribLocation(program, "vertPosition");   
-    // define how attribute reads data from the buffer
-    var size = 3;           // 3 components per iteration (xyz)
-    var type = gl.FLOAT;    // the data is 32bit floats
-    var normalize = gl.FALSE;  // dont normalize the data
-    var stride = 3 * Float32Array.BYTES_PER_ELEMENT;         // 0 = move forward size * sizeof(type) each iteration to get next position
-    var offset = 0;         // start at the beginning of the buffer
-    // use above settings
+    // *********************
+    // Vao buffer stuff 
+    // *********************
+    // SETTING AYA BUFFER STUFF FIRST
+    gl.bindVertexArray(ayaVAO);    // set Aya as current VAO
+    
+    // *********************
+    // AYA Buffer data
+    // *********************
+    // AYA Vertices
+    gl.bindBuffer (gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData (gl.ARRAY_BUFFER, new Float32Array(ayaVertices), gl.STATIC_DRAW);
+    var positionAttriLocation = gl.getAttribLocation(program, "vertPosition");
+    var size = 3;                                       // 3 components per iteration (xyz)
+    var type = gl.FLOAT;                                // the data is 32bit floats
+    var normalize = gl.FALSE;                           // dont normalize the data
+    var stride = 3 * Float32Array.BYTES_PER_ELEMENT;    // 0 = move forward size * sizeof(type) each iteration to get next position
+    var offset = 0;                                     // start at the beginning of the buffer
     gl.vertexAttribPointer(positionAttriLocation, size, type, normalize, stride, offset);
     gl.enableVertexAttribArray(positionAttriLocation);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, texAyaCoordsBufferObj);
+    // AYA Texture coords
+    gl.bindBuffer (gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData (gl.ARRAY_BUFFER, new Float32Array(ayaTexCoords), gl.STATIC_DRAW);
     var texCoordAttriLocation = gl.getAttribLocation(program, "vertTexCoord");
-    // define how texture attribute stuff is read
     var size = 2;                                       // size of each iteration
     var type = gl.FLOAT;                                // each color is 32bit Floats
     var normalize = gl.FALSE;                           // switch from 255 range to 0 - 1 range
@@ -313,22 +187,65 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, m
     // use above settings
     gl.vertexAttribPointer(texCoordAttriLocation, size, type, normalize, stride, offset);
     gl.enableVertexAttribArray(texCoordAttriLocation);
-    // END aya information
-    
-    /*
-     * texture stuff
-     */
+
+    // AYA Indices
+    gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData (gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ayaIndices), gl.STATIC_DRAW);
+
+    // DONE WITH AYA VAO
+    gl.bindVertexArray(null);
+
+    // FLOOR VAO
+    gl.bindVertexArray(floorVAO);
+
+    // *********************
+    // * FLOOR buffer data *
+    // *********************
+    // Floor Vertices
+    gl.bindBuffer (gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData (gl.ARRAY_BUFFER, new Float32Array(floorVertices), gl.STATIC_DRAW);
+    var positionAttriLocation = gl.getAttribLocation(program, "vertPosition");
+    var size = 3;                                       // 3 components per iteration (xyz)
+    var type = gl.FLOAT;                                // the data is 32bit floats
+    var normalize = gl.FALSE;                           // dont normalize the data
+    var stride = 3 * Float32Array.BYTES_PER_ELEMENT;    // 0 = move forward size * sizeof(type) each iteration to get next position
+    var offset = 0;                                     // start at the beginning of the buffer
+    gl.vertexAttribPointer(positionAttriLocation, size, type, normalize, stride, offset);
+    gl.enableVertexAttribArray(positionAttriLocation);
+
+    // AYA Texture coords
+    gl.bindBuffer (gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData (gl.ARRAY_BUFFER, new Float32Array(floorTexCoords), gl.STATIC_DRAW);
+    var texCoordAttriLocation = gl.getAttribLocation(program, "vertTexCoord");
+    var size = 2;                                       // size of each iteration
+    var type = gl.FLOAT;                                // each color is 32bit Floats
+    var normalize = gl.FALSE;                           // switch from 255 range to 0 - 1 range
+    var stride = 2 * Float32Array.BYTES_PER_ELEMENT;    // 0 = move forward size * sizeof(type) each iteration to get the next color
+    var offset = 0 * Float32Array.BYTES_PER_ELEMENT;    // start at the begining of buffer
+    // use above settings
+    gl.vertexAttribPointer(texCoordAttriLocation, size, type, normalize, stride, offset);
+    gl.enableVertexAttribArray(texCoordAttriLocation);
+
+    // AYA Indices
+    gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData (gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(floorIndices), gl.STATIC_DRAW);
+
+    // DONE WITH FLOOR VAO
+    gl.bindVertexArray(null);
+
+    /******************
+     * texture stuff  *
+     ******************/
+    // AYA
     var ayaTexture = gl.createTexture();
     var img = document.getElementById("AyaImage");
     gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
     gl.generateMipmap(gl.TEXTURE_2D)
     
+    // floor
+
     // some render settings
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -337,13 +254,19 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, m
 
     var then = 0;
 
-    // some vars for initial transforms
-    var translation = [0, -100, -750];
-    var rotation = [degToRad(190), degToRad(40), degToRad(180)];
-    var scale = [.3, .3, .3];
+    // some vars for AYA initial transforms
+    var ayaTranslation = [0, -100, -750];
+    var ayaRotation = [degToRad(190), degToRad(40), degToRad(180)];
+    var ayaScale = [.3, .3, .3];
+    
+    // some vars for Floor initial Transforms
+    var floorTranslation = [0, -100, -750];
+    var floorRotation = [degToRad(0), degToRad(0), degToRad(0)];
+    var floorScale = [100, 100, 100];
+
+    // Universal stuff for rendering objects
     var fieldOfViewRadians = degToRad(60);
     var rotateSpeed = 1.2;
-
     requestAnimationFrame(drawStuff);
 
     function drawStuff (now)
@@ -355,11 +278,10 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, m
 
         then = now;
 
-        rotation[1] += rotateSpeed * deltaTime;
+        ayaRotation[1] += rotateSpeed * deltaTime;
 
         // Convert from clipspace to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        //console.log ("Width: " + gl.canvas.width + ", Height: " + gl.canvas.height);
 
         // clear canvas
         gl.clearColor (0.70, 0.85, 0.8, 1.0);
@@ -375,20 +297,39 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, m
 
         // Compute matrix
         var matrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
-        matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
-        matrix = m4.xRotate(matrix, rotation[0]);
-        matrix = m4.yRotate(matrix, rotation[1]);
-        matrix = m4.zRotate(matrix, rotation[2]);
-        matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
+        matrix = m4.translate(matrix, ayaTranslation[0], ayaTranslation[1], ayaTranslation[2]);
+        matrix = m4.xRotate(matrix, ayaRotation[0]);
+        matrix = m4.yRotate(matrix, ayaRotation[1]);
+        matrix = m4.zRotate(matrix, ayaRotation[2]);
+        matrix = m4.scale(matrix, ayaScale[0], ayaScale[1], ayaScale[2]);
 
         // set matrix
         gl.uniformMatrix4fv(matLocation, false, matrix);
 
+        // draw aya
+        gl.bindVertexArray(ayaVAO);
         gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
         gl.activeTexture(gl.TEXTURE0);
-
         // execute GLSL program
         gl.drawElements(gl.TRIANGLES, ayaIndices.length, gl.UNSIGNED_SHORT, 0);
+
+        var matrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
+        matrix = m4.translate(matrix, floorTranslation[0], floorTranslation[1], floorTranslation[2]);
+        matrix = m4.xRotate(matrix, floorRotation[0]);
+        matrix = m4.yRotate(matrix, floorRotation[1]);
+        matrix = m4.zRotate(matrix, floorRotation[2]);
+        matrix = m4.scale(matrix, floorScale[0], floorScale[1], floorScale[2]);
+
+        // set matrix
+        gl.uniformMatrix4fv(matLocation, false, matrix);
+
+
+        // draw floor
+        gl.bindVertexArray(floorVAO);
+        gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
+        gl.activeTexture(gl.TEXTURE0)
+        // execute GLSL program
+        gl.drawElements(gl.TRIANGLES, floorIndices.length, gl.UNSIGNED_SHORT, 0);
 
         // call next frame
         requestAnimationFrame(drawStuff);
