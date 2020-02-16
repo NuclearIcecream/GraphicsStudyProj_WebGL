@@ -199,32 +199,34 @@ var initEngine = function () {
         return await response.text();
     };
 
-    async function getModel () {
+    async function getAyaModel () {
         const response = await fetch('/Aya_model.json');
         return await response.json();
     };
 
-    async function getImage () {
+    async function getFloorModel () {
+        const response = await fetch('/floor.json');
+        return await response.json();
+    };
+
+    async function getAyaImage () {
         const response = await fetch ('/091_W_Aya_2k_01.jpg')
         return await response.blob();
     }
 
     function getData () {
-        return Promise.all ([getVSShader(), getFSShader(), getModel(), getImage()])
+        return Promise.all ([getVSShader(), getFSShader(), getAyaModel(), getFloorModel (), getAyaImage()])
     };
 
-    getData ().then (([vertexShaderCode, fragmentShaderCode, modelData, textureImageData]) => {
-        runEngine(vertexShaderCode, fragmentShaderCode, modelData, textureImageData);
+    getData ().then (([vertexShaderCode, fragmentShaderCode, modelAyaData, modelFloorData, textureImageData]) => {
+        runEngine(vertexShaderCode, fragmentShaderCode, modelAyaData, modelFloorData, textureImageData);
     });
 };
 
 
 // the actual script {was initEngine}
-var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, textureImageData)
+var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, modelFloorData ,textureImageData)
 {
-
-    modelJSON = inputModelJSON;
-
     console.log('Script Working');
     // ++++++++++++++++++++++++++
     //  Initialize WebGL
@@ -267,7 +269,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, t
     // Lookup matrix uniform
     var matLocation = gl.getUniformLocation(program, "transformMatrix");
 
-    // set geometry data
+    // set Aya geometry data
     var ayaVertices = inputModelJSON.meshes[0].vertices;
 
     var ayaIndices = [].concat.apply([], inputModelJSON.meshes[0].faces);
@@ -275,20 +277,20 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, t
     var ayaTexCoords = inputModelJSON.meshes[0].texturecoords[0];
 
     // Buffer set up
-    var vertBufferObj = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferObj);
+    var vertAyaBufferObj = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertAyaBufferObj);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ayaVertices), gl.STATIC_DRAW);
 
-    var texCoordsBufferObj = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBufferObj);
+    var texAyaCoordsBufferObj = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, texAyaCoordsBufferObj);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ayaTexCoords), gl.STATIC_DRAW);
 
-    var indexBufferObj = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObj);
+    var indexAyaBufferObj = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexAyaBufferObj);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ayaIndices), gl.STATIC_DRAW);
 
     // Buffer attribs
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertBufferObj);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertAyaBufferObj);
     var positionAttriLocation = gl.getAttribLocation(program, "vertPosition");   
     // define how attribute reads data from the buffer
     var size = 3;           // 3 components per iteration (xyz)
@@ -300,18 +302,18 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, t
     gl.vertexAttribPointer(positionAttriLocation, size, type, normalize, stride, offset);
     gl.enableVertexAttribArray(positionAttriLocation);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBufferObj);
+    gl.bindBuffer(gl.ARRAY_BUFFER, texAyaCoordsBufferObj);
     var texCoordAttriLocation = gl.getAttribLocation(program, "vertTexCoord");
     // define how texture attribute stuff is read
     var size = 2;                                       // size of each iteration
     var type = gl.FLOAT;                                // each color is 32bit Floats
     var normalize = gl.FALSE;                           // switch from 255 range to 0 - 1 range
-    var stride = 3 * Float32Array.BYTES_PER_ELEMENT;    // 0 = move forward size * sizeof(type) each iteration to get the next color
+    var stride = 2 * Float32Array.BYTES_PER_ELEMENT;    // 0 = move forward size * sizeof(type) each iteration to get the next color
     var offset = 0 * Float32Array.BYTES_PER_ELEMENT;    // start at the begining of buffer
     // use above settings
     gl.vertexAttribPointer(texCoordAttriLocation, size, type, normalize, stride, offset);
     gl.enableVertexAttribArray(texCoordAttriLocation);
-
+    // END aya information
     
     /*
      * texture stuff
@@ -326,7 +328,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputModelJSON, t
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
     gl.generateMipmap(gl.TEXTURE_2D)
-
+    
     // some render settings
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
