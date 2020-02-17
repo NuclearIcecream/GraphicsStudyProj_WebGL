@@ -51,6 +51,18 @@ function projection (width, height, depth) {
     ];
 }
 
+function objectMatrixTransform (viewProjMat, translateMat, rotationMat, scaleMat)
+{
+    var matrix = m4.translate(viewProjMat, translateMat[0],
+        translateMat[1], translateMat[2]);
+    matrix = m4.xRotate(matrix, rotationMat[0]);
+    matrix = m4.yRotate(matrix, rotationMat[1]);
+    matrix = m4.zRotate(matrix, rotationMat[2]);
+    matrix = m4.scale(matrix, scaleMat[0],
+        scaleMat[1], scaleMat[2]);
+    return matrix;
+}
+
 // This function just makes sure external data loads in correctly
 var initEngine = function () {
 
@@ -144,11 +156,13 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     var ayaVertices = inputAyaJSON.meshes[0].vertices;
     var ayaIndices = [].concat.apply([], inputAyaJSON.meshes[0].faces);
     var ayaTexCoords = inputAyaJSON.meshes[0].texturecoords[0];
+    var ayaNormals = inputAyaJSON.meshes[0].normals;
 
     // now floor
     var floorVertices = inputFloorJSON.meshes[0].vertices;
     var floorIndices = [].concat.apply([], inputFloorJSON.meshes[0].faces);
     var floorTexCoords = inputFloorJSON.meshes[0].texturecoords[0];
+    var floorNormals = inputFloorJSON.meshes[0].normals;
 
     // make VAOs
     var ayaVAO = gl.createVertexArray();    // aya vao
@@ -252,8 +266,6 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     gl.frontFace(gl.CCW);
     gl.cullFace(gl.BACK);
 
-    var then = 0;
-
     // some vars for AYA initial transforms
     var ayaTranslation = [0, -100, -750];
     var ayaRotation = [degToRad(190), degToRad(40), degToRad(180)];
@@ -266,19 +278,14 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
 
     // Universal stuff for rendering objects
     var fieldOfViewRadians = degToRad(60);
-    var rotateSpeed = 1.2;
     requestAnimationFrame(drawStuff);
 
-    function drawStuff (now)
+    function drawStuff (time)
     {
-        // convert time
-        now *= 0.001;
-
-        var deltaTime = now - then;
-
-        then = now;
-
-        ayaRotation[1] += rotateSpeed * deltaTime;
+        // rotation thing
+        time = time * 0.0005;
+        ayaRotation[1] = time;
+        floorRotation[1] = time;
 
         // Convert from clipspace to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -296,13 +303,9 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         var zFar = 2000;
 
         // Compute matrix
-        var matrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
-        matrix = m4.translate(matrix, ayaTranslation[0], ayaTranslation[1], ayaTranslation[2]);
-        matrix = m4.xRotate(matrix, ayaRotation[0]);
-        matrix = m4.yRotate(matrix, ayaRotation[1]);
-        matrix = m4.zRotate(matrix, ayaRotation[2]);
-        matrix = m4.scale(matrix, ayaScale[0], ayaScale[1], ayaScale[2]);
-
+        var projMat = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
+        var matrix = objectMatrixTransform (projMat, ayaTranslation, ayaRotation, ayaScale);
+        
         // set matrix
         gl.uniformMatrix4fv(matLocation, false, matrix);
 
@@ -313,16 +316,13 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         // execute GLSL program
         gl.drawElements(gl.TRIANGLES, ayaIndices.length, gl.UNSIGNED_SHORT, 0);
 
-        var matrix = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
-        matrix = m4.translate(matrix, floorTranslation[0], floorTranslation[1], floorTranslation[2]);
-        matrix = m4.xRotate(matrix, floorRotation[0]);
-        matrix = m4.yRotate(matrix, floorRotation[1]);
-        matrix = m4.zRotate(matrix, floorRotation[2]);
-        matrix = m4.scale(matrix, floorScale[0], floorScale[1], floorScale[2]);
+        // END OF AYA
+
+        var projMat = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
+        var matrix = objectMatrixTransform (projMat, floorTranslation, floorRotation, floorScale);
 
         // set matrix
         gl.uniformMatrix4fv(matLocation, false, matrix);
-
 
         // draw floor
         gl.bindVertexArray(floorVAO);
@@ -330,6 +330,8 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         gl.activeTexture(gl.TEXTURE0)
         // execute GLSL program
         gl.drawElements(gl.TRIANGLES, floorIndices.length, gl.UNSIGNED_SHORT, 0);
+
+        // END OF FLOOR
 
         // call next frame
         requestAnimationFrame(drawStuff);
