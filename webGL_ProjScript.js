@@ -297,20 +297,25 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         // tell program to use shaders
         gl.useProgram(program);
 
-        // perspective settings
+        // create projection Mat
         var aspect = gl.canvas.clientWidth/gl.canvas.clientHeight;
-        var zNear = 1;
-        var zFar = 2000;
+        var projMat = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
 
-        // Compute matrix
-        var projMat = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
-        var matrix = objectMatrixTransform (projMat, ayaTranslation, ayaRotation, ayaScale);
-        
-        // set matrix
+        // create camera mat
+        var cameraPos = [0, 100, 300];
+        var target = [0, 50, 0];
+        var up = [0, 1, 0];
+        var cameraMat = m4.lookAt(cameraPos, target, up);
+
+        // create view mat
+        var viewMat = m4.inverse(cameraMat);
+        var viewProjMat = m4.multiply(projMat, viewMat);
+
+        // set aya matrix
+        gl.bindVertexArray(ayaVAO);
+        var matrix = objectMatrixTransform (viewProjMat, ayaTranslation, ayaRotation, ayaScale);
         gl.uniformMatrix4fv(matLocation, false, matrix);
 
-        // draw aya
-        gl.bindVertexArray(ayaVAO);
         gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
         gl.activeTexture(gl.TEXTURE0);
         // execute GLSL program
@@ -318,14 +323,11 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
 
         // END OF AYA
 
-        var projMat = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
-        var matrix = objectMatrixTransform (projMat, floorTranslation, floorRotation, floorScale);
-
-        // set matrix
+        // set floor matrix
+        gl.bindVertexArray(floorVAO);
+        var matrix = objectMatrixTransform (viewProjMat, floorTranslation, floorRotation, floorScale);
         gl.uniformMatrix4fv(matLocation, false, matrix);
 
-        // draw floor
-        gl.bindVertexArray(floorVAO);
         gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
         gl.activeTexture(gl.TEXTURE0)
         // execute GLSL program
