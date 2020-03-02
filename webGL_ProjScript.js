@@ -278,6 +278,19 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     // DONE WITH FLOOR VAO
     gl.bindVertexArray(null);
 
+    /***************
+     * LIGHT STUFF *
+     ***************/
+    gl.useProgram(program);
+
+    var ambientUniformLocation = gl.getUniformLocation (program, 'ambientLightIntensity');
+    var directionUniformLocation = gl.getUniformLocation (program, 'lightSourceDirection');
+    var intensityUniformLocation = gl.getUniformLocation (program, 'lightSourceIntensity');
+
+    gl.uniform3f (ambientUniformLocation, 0.1, 0.1, 0.2);
+    gl.uniform3f (directionUniformLocation, 20.0, 10.0, 0.0);
+    gl.uniform3f (intensityUniformLocation, 0.9, 0.9, 0.9);
+
     /******************
      * texture stuff  *
      ******************/
@@ -289,8 +302,6 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
     gl.generateMipmap(gl.TEXTURE_2D)
     
-    // floor
-
     // some render settings
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -306,6 +317,12 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     var floorTranslation = [0, -150, -750];
     var floorRotation = [degToRad(0), degToRad(0), degToRad(0)];
     var floorScale = [100, 100, 100];
+
+    // create camera mat & settings
+    var cameraPos = [0, 100, 300];
+    var target = [0, 50, 0];
+    var up = [0, 1, 0];
+    var cameraMat = m4.lookAt(cameraPos, target, up);
 
     // Universal stuff for rendering objects
     var fieldOfViewRadians = degToRad(60);
@@ -331,12 +348,6 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         // create projection Mat
         var aspect = gl.canvas.clientWidth/gl.canvas.clientHeight;
         var projMat = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
-
-        // create camera mat
-        var cameraPos = [0, 100, 300];
-        var target = [0, 50, 0];
-        var up = [0, 1, 0];
-        var cameraMat = m4.lookAt(cameraPos, target, up);
 
         // create view mat
         var viewMat = m4.inverse(cameraMat);
