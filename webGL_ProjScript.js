@@ -67,27 +67,27 @@ function objectMatrixTransform (viewProjMat, translateMat, rotationMat, scaleMat
 var initEngine = function () {
 
     async function getVSShader () {
-        const response = await fetch('/shaders.vs.glsl');
+        const response = await fetch('shaders.vs.glsl');
         return await response.text();
     };
 
     async function getFSShader () {
-        const response = await fetch('/shaders.fs.glsl');
+        const response = await fetch('shaders.fs.glsl');
         return await response.text();
     };
 
     async function getAyaModel () {
-        const response = await fetch('/Aya_model.json');
+        const response = await fetch('Aya_model.json');
         return await response.json();
     };
 
     async function getFloorModel () {
-        const response = await fetch('/floor.json');
+        const response = await fetch('floor.json');
         return await response.json();
     };
 
     async function getAyaImage () {
-        const response = await fetch ('/091_W_Aya_2k_01.jpg')
+        const response = await fetch ('091_W_Aya_2k_01.jpg')
         return await response.blob();
     }
 
