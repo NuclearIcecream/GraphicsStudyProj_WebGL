@@ -152,10 +152,6 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     var viewMatLocation = gl.getUniformLocation (program, "u_View");
     var projMatLocation = gl.getUniformLocation (program, "u_Projection");
 
-    var worldMatrix = new Float32Array (16);
-    var viewMatrix = new Float32Array (16);
-    var projMatrix = new Float32Array (16);
-
     // *******************
     // Get geometry data
     // *******************
@@ -309,9 +305,9 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     gl.cullFace(gl.BACK);
 
     // some vars for AYA initial transforms
-    var ayaTranslation = [0, 0, 0];
+    var ayaTranslation = [0, -50, -300];
     var ayaRotation = [degToRad(0), degToRad(0), degToRad(0)];
-    var ayaScale = [.5, .5, .5];
+    var ayaScale = [.15, .15, .15];
     
     // some vars for Floor initial Transforms
     var floorTranslation = [0, -150, -750];
@@ -321,19 +317,19 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     var ayaTransforms = new Float32Array (16);
     var floorTransforms = new Float32Array (16);
 
-    function drawScene (projectionMatrix, viewMatrix)
+    function drawScene (projMatrix, worldMatrix, viewMatrix)
     {
         // tell program to use shaders
         gl.useProgram(program);
 
-        var cameraMat = m4.inverse(viewMatrix);
+        viewMatrix = m4.inverse(viewMatrix);
 
         // Render Aya
         // use aya VAO information
         gl.bindVertexArray(ayaVAO);
         ayaTransforms = objectMatrixTransform (worldMatrix, ayaTranslation, ayaRotation, ayaScale);
         gl.uniformMatrix4fv (projMatLocation, false, projMatrix);
-        gl.uniformMatrix4fv (viewMatLocation, false, cameraMat);
+        gl.uniformMatrix4fv (viewMatLocation, false, viewMatrix);
         gl.uniformMatrix4fv (worldMatLocation, false, ayaTransforms);
           
         // do Aya Texture
@@ -363,8 +359,8 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         // rotate the scene
         {
             time = time * 0.0005;
-            //ayaRotation[1] = time;
-            //floorRotation[1] = time;
+            ayaRotation[1] = time;
+            floorRotation[1] = time;
         }
 
         // Convert from clipspace to pixels
@@ -376,23 +372,26 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
 
         // create camera mat & settings
         var cameraPos = [0, 100, 300];
-        var target = [0, 10, 0];
+        var target = [0, 10, 50];
         var up = [0, 1, 0];
-        //var cameraMat = m4.lookAt(cameraPos, target, up);
-
+        
         // Universal scene rules
         var aspect = gl.canvas.clientWidth/gl.canvas.clientHeight;
         var FOVRadians = degToRad(60);
 
-        //worldMatrix = m4.identity ();
+        var worldMatrix = new Float32Array (16);
+        var viewMatrix = new Float32Array (16);
+        var projMatrix = new Float32Array (16);
+
+        worldMatrix = m4.identity ();
         viewMatrix = m4.lookAt (cameraPos, target, up);
-        projectionMatrix = m4.perspective (FOVRadians, aspect, 1, 2000);    
+        projMatrix = m4.perspective (FOVRadians, aspect, 1, 2000);    
 
         gl.uniformMatrix4fv (worldMatLocation, false, worldMatrix);
         gl.uniformMatrix4fv (viewMatLocation, false, viewMatrix);
         gl.uniformMatrix4fv (projMatLocation, false, projMatrix);
 
-        drawScene ();
+        drawScene (projMatrix, worldMatrix, viewMatrix);
 
          // call next frame
          requestAnimationFrame(renderScene);
