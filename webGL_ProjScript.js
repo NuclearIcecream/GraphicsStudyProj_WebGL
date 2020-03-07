@@ -332,8 +332,13 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         scale: [100, 100, 100]
     }
 
+    // vars used in render
     var ayaTransforms = new Float32Array (16);
     var floorTransforms = new Float32Array (16);
+
+    var worldMatrix = new Float32Array (16);
+    var viewMatrix = new Float32Array (16);
+    var projMatrix = new Float32Array (16);
 
     function drawScene (projMatrix, worldMatrix, viewMatrix, programInfo)
     {
@@ -401,10 +406,6 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         // Universal scene rules
         var aspect = gl.canvas.clientWidth/gl.canvas.clientHeight;
         var FOVRadians = degToRad(60);
-
-        var worldMatrix = new Float32Array (16);
-        var viewMatrix = new Float32Array (16);
-        var projMatrix = new Float32Array (16);
 
         worldMatrix = m4.identity ();
         viewMatrix = m4.lookAt (cameraPos, target, up);
