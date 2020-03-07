@@ -63,6 +63,24 @@ function objectMatrixTransform (viewProjMat, translateMat, rotationMat, scaleMat
     return matrix;
 }
 
+function getMatrixLocations (programInfo, gl)
+{
+    // projection location
+    var projectionLoc = gl.getUniformLocation (programInfo, "u_Projection");
+    // view location
+    var viewLoc = gl.getUniformLocation (programInfo, "u_View");
+    // world location
+    var worldLoc = gl.getUniformLocation (programInfo, "u_World");
+
+    const matrixLocations = {
+        projection:  projectionLoc,
+        view: viewLoc,
+        world: worldLoc
+    };
+    
+    return matrixLocations;
+}
+
 // This function just makes sure external data loads in correctly
 var initEngine = function () {
 
@@ -142,26 +160,16 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     // init program
     var program = createProgram(gl, vertexShader, fragmentShader);
 
-    /*********************************
-     * setting attributes and things *
-     *********************************/
-    
-    // Lookup matrix uniform
-    //var matLocation = gl.getUniformLocation (program, "transformMatrix");
-    var worldMatLocation = gl.getUniformLocation (program, "u_World");
-    var viewMatLocation = gl.getUniformLocation (program, "u_View");
-    var projMatLocation = gl.getUniformLocation (program, "u_Projection");
-
     // *******************
     // Get geometry data
     // *******************
-    // Aya first
+    // Aya model data
     var ayaVertices = inputAyaJSON.meshes[0].vertices;
     var ayaIndices = [].concat.apply([], inputAyaJSON.meshes[0].faces);
     var ayaTexCoords = inputAyaJSON.meshes[0].texturecoords[0];
     var ayaNormals = inputAyaJSON.meshes[0].normals;
 
-    // now floor
+    // floor model data
     var floorVertices = inputFloorJSON.meshes[0].vertices;
     var floorIndices = [].concat.apply([], inputFloorJSON.meshes[0].faces);
     var floorTexCoords = inputFloorJSON.meshes[0].texturecoords[0];
@@ -291,9 +299,9 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
      * texture stuff  *
      ******************/
     // AYA
-    var ayaTexture = gl.createTexture();
+    var whiteTexture = gl.createTexture();
     var img = document.getElementById("AyaImage");
-    gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
+    gl.bindTexture(gl.TEXTURE_2D, whiteTexture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
     gl.generateMipmap(gl.TEXTURE_2D)
@@ -305,35 +313,51 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
     gl.cullFace(gl.BACK);
 
     // some vars for AYA initial transforms
-    var ayaTranslation = [0, -50, -300];
-    var ayaRotation = [degToRad(0), degToRad(0), degToRad(0)];
-    var ayaScale = [.15, .15, .15];
+    const ayaUniforms = {
+        texture: whiteTexture,
+        translation: [0, -50, -300],
+        rotation: [degToRad(0), degToRad(0), degToRad(0)],
+        scale: [.15, .15, .15]
+    };
     
     // some vars for Floor initial Transforms
-    var floorTranslation = [0, -150, -750];
-    var floorRotation = [degToRad(0), degToRad(0), degToRad(0)];
-    var floorScale = [100, 100, 100];
+    const floorUniforms = {
+        texture: whiteTexture,
+        translation: [0, -150, -750],
+        rotation: [degToRad(0), degToRad(0), degToRad(0)],
+        scale: [100, 100, 100]
+    }
 
+    // vars used in render
     var ayaTransforms = new Float32Array (16);
     var floorTransforms = new Float32Array (16);
 
-    function drawScene (projMatrix, worldMatrix, viewMatrix)
+    var worldMatrix = new Float32Array (16);
+    var viewMatrix = new Float32Array (16);
+    var projMatrix = new Float32Array (16);
+
+    function drawScene (projMatrix, worldMatrix, viewMatrix, programInfo)
     {
         // tell program to use shaders
         gl.useProgram(program);
 
         viewMatrix = m4.inverse(viewMatrix);
 
+        // get uniform locations
+        var matrixLocations = getMatrixLocations (programInfo, gl);
+
+        // set uniform locations
+        gl.uniformMatrix4fv (matrixLocations.projection, false, projMatrix);
+        gl.uniformMatrix4fv (matrixLocations.view, false, viewMatrix);
+
         // Render Aya
         // use aya VAO information
         gl.bindVertexArray(ayaVAO);
-        ayaTransforms = objectMatrixTransform (worldMatrix, ayaTranslation, ayaRotation, ayaScale);
-        gl.uniformMatrix4fv (projMatLocation, false, projMatrix);
-        gl.uniformMatrix4fv (viewMatLocation, false, viewMatrix);
-        gl.uniformMatrix4fv (worldMatLocation, false, ayaTransforms);
+        ayaTransforms = objectMatrixTransform (worldMatrix, ayaUniforms.translation, ayaUniforms.rotation, ayaUniforms.scale);
+        gl.uniformMatrix4fv (matrixLocations.world, false, ayaTransforms);
           
         // do Aya Texture
-        gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
+        gl.bindTexture(gl.TEXTURE_2D, ayaUniforms.texture);
         gl.activeTexture(gl.TEXTURE0);
 
         // execute GLSL program
@@ -343,11 +367,11 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         // Render Floor
         // use floor VAO information
         gl.bindVertexArray(floorVAO);
-        floorTransforms = objectMatrixTransform (worldMatrix, floorTranslation, floorRotation, floorScale);
-        gl.uniformMatrix4fv(worldMatLocation, false, floorTransforms);
+        floorTransforms = objectMatrixTransform (worldMatrix, floorUniforms.translation, floorUniforms.rotation, floorUniforms.scale);
+        gl.uniformMatrix4fv(matrixLocations.world, false, floorTransforms);
 
         // do floor texture
-        gl.bindTexture(gl.TEXTURE_2D, ayaTexture);
+        gl.bindTexture(gl.TEXTURE_2D, floorUniforms.texture);
         gl.activeTexture(gl.TEXTURE0)
 
         // execute GLSL program
@@ -359,8 +383,8 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         // rotate the scene
         {
             time = time * 0.0005;
-            ayaRotation[1] = time;
-            floorRotation[1] = time;
+            ayaUniforms.rotation[1] = time;
+            floorUniforms.rotation[1] = time;
         }
 
         // Convert from clipspace to pixels
@@ -379,19 +403,11 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
         var aspect = gl.canvas.clientWidth/gl.canvas.clientHeight;
         var FOVRadians = degToRad(60);
 
-        var worldMatrix = new Float32Array (16);
-        var viewMatrix = new Float32Array (16);
-        var projMatrix = new Float32Array (16);
-
         worldMatrix = m4.identity ();
         viewMatrix = m4.lookAt (cameraPos, target, up);
         projMatrix = m4.perspective (FOVRadians, aspect, 1, 2000);    
 
-        gl.uniformMatrix4fv (worldMatLocation, false, worldMatrix);
-        gl.uniformMatrix4fv (viewMatLocation, false, viewMatrix);
-        gl.uniformMatrix4fv (projMatLocation, false, projMatrix);
-
-        drawScene (projMatrix, worldMatrix, viewMatrix);
+        drawScene (projMatrix, worldMatrix, viewMatrix, program);
 
          // call next frame
          requestAnimationFrame(renderScene);
