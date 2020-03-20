@@ -97,8 +97,12 @@ var initEngine = function () {
     };
 
     async function getAyaImage () {
-        const response = await fetch ('091_W_Aya_2k_01.jpg')
-        return await response.blob ();
+        return new Promise ( (resolve, reject) => {
+            var image = new Image();
+            image.src = '091_W_Aya_2k_01.jpg'
+            image.onload = () => resolve (image)
+            image.onerror = () => reject (new Error ("Could not reslove image"))
+        })
     }
 
     function getData () {
@@ -306,7 +310,8 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
 
     // AYA
     var whiteTexture = gl.createTexture ();
-    var img = document.getElementById ("AyaImage");
+    var img = new Image();
+    img = textureImageData;
     gl.activeTexture (gl.TEXTURE0);
     gl.bindTexture (gl.TEXTURE_2D, whiteTexture);
     gl.pixelStorei (gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -413,8 +418,8 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     var lightPos = [230.0, 250.0, 10.0];
     var lightTarget = [0.0, 50.0, 0.0];
 
-    //cameraPos = lightPos;    
-    //target = lightTarget;
+    cameraPos = lightPos;    
+    target = lightTarget;
 
     gl.uniform3f (directionUniformLocation, lightPos[0], lightPos[1], lightPos[2]);
     gl.uniform3f (viewPosition, cameraPos[0], cameraPos[1], cameraPos[2]);
