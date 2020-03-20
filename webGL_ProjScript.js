@@ -297,13 +297,21 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     /******************
      * texture stuff  *
      ******************/
+    // texture look up test
+    var textureDiffLoc = gl.getUniformLocation (renderSceneProgram, "diffuseSampler");
+    gl.uniform1i (textureDiffLoc, 0); // bind to 0
+
+    var textureDepthLoc = gl.getUniformLocation (renderSceneProgram, "shadowMap");
+    gl.uniform1i (textureDepthLoc, 1); // bind to 1
+
     // AYA
-    var whiteTexture = gl.createTexture();
-    var img = document.getElementById("AyaImage");
-    gl.bindTexture(gl.TEXTURE_2D, whiteTexture);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    gl.generateMipmap(gl.TEXTURE_2D)
+    var whiteTexture = gl.createTexture ();
+    var img = document.getElementById ("AyaImage");
+    gl.activeTexture (gl.TEXTURE0);
+    gl.bindTexture (gl.TEXTURE_2D, whiteTexture);
+    gl.pixelStorei (gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap (gl.TEXTURE_2D)
     
     // some render settings
     gl.enable(gl.CULL_FACE);
@@ -316,6 +324,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
      ********************/
     const depthTexture = gl.createTexture ();
     const depthTextureSize = 1024;
+    gl.activeTexture (gl.TEXTURE1);
     gl.bindTexture (gl.TEXTURE_2D, depthTexture);
     gl.texImage2D (gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT32F, depthTextureSize,
                     depthTextureSize, 0, gl.DEPTH_COMPONENT, gl.FLOAT, null);
@@ -359,14 +368,20 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     var viewLoc = gl.getUniformLocation (renderSceneProgram, "u_View");
     // world location - regular shaders
     var worldLoc = gl.getUniformLocation (renderSceneProgram, "u_World");
+    // light proj - regular shader
+    var lightProjRegLoc = gl.getUniformLocation (renderSceneProgram, "u_LightProjection");
+    // light view - regular shader
+    var lightViewRegLoc = gl.getUniformLocation (renderSceneProgram, "u_LightView");
+
     // lightProjection location - shadow shaders
     var lightProjLocation = gl.getUniformLocation (renderLightProgram, "u_LightProjection");
     // lightView Location - shadow shaders
     var lightViewLocation = gl.getUniformLocation (renderLightProgram, "u_LightView");
     // worldLocation - shadow Shaders
     var lightWorldLocation = gl.getUniformLocation (renderLightProgram, "u_World");
+    // fragment shader uniform
+    var viewPosition = gl.getUniformLocation (renderSceneProgram, "viewPosition");
 
-    var viewPosition = gl.getUniformLocation (renderSceneProgram, "viewPosition")
 
     const matrixLocations = {
         projection:  projectionLoc,
@@ -395,8 +410,8 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     var up = [0, 1, 0];
     
     // light settings
-    var lightPos = [400.0, 200.0, 300.0];
-    var lightTarget = [0.0, 0.0, 0.0];
+    var lightPos = [230.0, 250.0, 10.0];
+    var lightTarget = [0.0, 50.0, 0.0];
 
     //cameraPos = lightPos;    
     //target = lightTarget;
@@ -428,8 +443,9 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         gl.uniformMatrix4fv (matrixLocations.lightWorld, false, ayaTransforms);
           
         // do Aya Texture
-        gl.bindTexture(gl.TEXTURE_2D, ayaUniforms.texture);
         gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, ayaUniforms.texture);
+        
 
         // execute GLSL program
         gl.drawElements(gl.TRIANGLES, ayaIndices.length, gl.UNSIGNED_SHORT, 0);
@@ -442,15 +458,15 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         gl.uniformMatrix4fv(matrixLocations.lightWorld, false, floorTransforms);
 
         // do floor texture
-        gl.bindTexture(gl.TEXTURE_2D, floorUniforms.texture);
         gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, floorUniforms.texture);
 
         // execute GLSL program
         gl.drawElements(gl.TRIANGLES, floorIndices.length, gl.UNSIGNED_SHORT, 0);
         // END OF FLOOR
     }
 
-    function drawCameraScene (projMatrix, worldMatrix, viewMatrix, programInfo)
+    function drawCameraScene (projMatrix, worldMatrix, viewMatrix, lightProj, lightView ,programInfo)
     {
         // tell program to use shaders
         gl.useProgram(programInfo);
@@ -460,6 +476,8 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         // set uniform locations
         gl.uniformMatrix4fv (matrixLocations.projection, false, projMatrix);
         gl.uniformMatrix4fv (matrixLocations.view, false, viewMatrix);
+        gl.uniformMatrix4fv (lightProjRegLoc, false, lightProj);
+        gl.uniformMatrix4fv (lightViewRegLoc, false, lightView);
 
         // Render Aya
         // use aya VAO information
@@ -468,9 +486,9 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         gl.uniformMatrix4fv (matrixLocations.regWorld, false, ayaTransforms);
           
         // do Aya Texture
-        gl.bindTexture(gl.TEXTURE_2D, ayaUniforms.texture);
         gl.activeTexture(gl.TEXTURE0);
-
+        gl.bindTexture (gl.TEXTURE_2D, ayaUniforms.texture);
+        
         // execute GLSL program
         gl.drawElements(gl.TRIANGLES, ayaIndices.length, gl.UNSIGNED_SHORT, 0);
         // END OF AYA
@@ -482,9 +500,9 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         gl.uniformMatrix4fv(matrixLocations.regWorld, false, floorTransforms);
 
         // do floor texture
-        gl.bindTexture(gl.TEXTURE_2D, floorUniforms.texture);
-        gl.activeTexture(gl.TEXTURE0)
-
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture (gl.TEXTURE_2D, floorUniforms.texture);
+        
         // execute GLSL program
         gl.drawElements(gl.TRIANGLES, floorIndices.length, gl.UNSIGNED_SHORT, 0);
         // END OF FLOOR
@@ -505,14 +523,14 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         // light world prolly not necissary
         //lightWorldMatrix = ;
         lightViewMatrix = m4.lookAt (lightPos, lightTarget, up);
-        lightProjMatrix = m4.orthographic (-100, 100, -100, 100, 0.5, 1000);
+        lightProjMatrix = m4.orthographic (-10, 10, -10, 10, 0.5, 1000);
 
         // for testing
         worldMatrix = m4.identity ();
 
         gl.bindFramebuffer (gl.FRAMEBUFFER, depthFramebuffer);
         gl.viewport(0, 0, depthTextureSize, depthTextureSize);
-        gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
 
         drawLightShadow (lightProjMatrix, lightViewMatrix, worldMatrix, renderLightProgram);        
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -528,9 +546,13 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
 
         worldMatrix = m4.identity ();
         viewMatrix = m4.lookAt (cameraPos, target, up);
-        projMatrix = m4.perspective (FOVRadians, aspect, 1, 2000);    
+        projMatrix = m4.perspective (FOVRadians, aspect, 1, 2000);   
+        
+        // send the shadow shader
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture (gl.TEXTURE_2D, depthTexture);
 
-        drawCameraScene (projMatrix, worldMatrix, viewMatrix, renderSceneProgram);
+        drawCameraScene (projMatrix, worldMatrix, viewMatrix, lightProjMatrix, lightViewMatrix, renderSceneProgram);
 
          // call next frame
          requestAnimationFrame(renderScene);

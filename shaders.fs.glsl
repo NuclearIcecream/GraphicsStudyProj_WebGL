@@ -2,15 +2,17 @@
 
 precision mediump float;
 
-in vec3 fragPosition;
+in vec3 v_FragPosition;
 in vec2 fragTexCoord;
 in vec3 v_Normal;
+in vec4 v_FragPosLightSpace;
 
 uniform vec3 viewPosition;
 uniform vec3 ambientLightIntensity;
 uniform vec3 lightSourceIntensity;
 uniform vec3 lightSourceDirection;
 uniform sampler2D diffuseSampler;
+uniform sampler2D shadowMap;
 
 out vec4 outColor;
 
@@ -24,17 +26,29 @@ void main()
     vec3 ambient = color * 0.15;
 
     // diffuse component
-    vec3 lightDir = normalize(lightSourceDirection - fragPosition);
+    vec3 lightDir = normalize(lightSourceDirection - v_FragPosition);
     float diff = max (dot (lightDir, surfNormal), 0.0);
-    vec3 diffuse = diff * lightColor;
+    vec3 diffuse = diff * lightColor * (0.15);
 
     // specular component
-    vec3 viewDir = normalize (viewPosition - fragPosition);
+    vec3 viewDir = normalize (viewPosition - v_FragPosition);
     float spec = 0.0;
     vec3 halfwayDir = normalize (lightDir + viewDir);
     spec = pow (max (dot (surfNormal, halfwayDir), 0.0), 64.0);
     vec3 specular = spec * lightColor;
- 
-    vec3 lighting = (ambient * (diffuse + specular)) * color;
+
+    // calc shadows
+    // perspec divides
+    vec3 projCoords = v_FragPosLightSpace.xyz / v_FragPosLightSpace.w;
+    // transform to 0,1 range
+    projCoords = projCoords * 0.5 + 0.5;
+    // get depth from light perspec
+    float closeDepthLight = texture (shadowMap, projCoords.xy).r;
+    // get depth from current fragment
+    float closeDepthFrag = projCoords.z;
+    // check if current frag in shadow
+    float shadow = closeDepthFrag > closeDepthLight ? 1.0 : 0.0;
+
+    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
     outColor = vec4 (lighting, 1.0);
 }
