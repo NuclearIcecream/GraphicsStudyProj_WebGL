@@ -105,8 +105,12 @@ var initEngine = function () {
     };
 
     async function getAyaImage () {
-        const response = await fetch ('091_W_Aya_2k_01.jpg')
-        return await response.blob();
+        return new Promise ( (resolve, reject) => {
+            var image = new Image();
+            image.src = '091_W_Aya_2k_01.jpg'
+            image.onload = () => resolve (image)
+            image.onerror = () => reject (new Error ("Could not reslove image"))
+        })
     }
 
     function getData () {
@@ -300,7 +304,8 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, inputAyaJSON, inp
      ******************/
     // AYA
     var whiteTexture = gl.createTexture();
-    var img = document.getElementById("AyaImage");
+    var img = new Image();
+    img = textureImageData;
     gl.bindTexture(gl.TEXTURE_2D, whiteTexture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
