@@ -107,7 +107,7 @@ var initEngine = function () {
     async function getAyaImage () {
         return new Promise ( (resolve, reject) => {
             var image = new Image();
-            image.src = '091_W_Aya_2k_01.jpg'
+            image.src = '![](091_W_Aya_2k_01.jpg)'
             image.onload = () => resolve (image)
             image.onerror = () => reject (new Error ("Could not reslove image"))
         })
