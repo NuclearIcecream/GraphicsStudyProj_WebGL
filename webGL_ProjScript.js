@@ -416,10 +416,10 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     
     // light settings
     var lightPos = [230.0, 250.0, 10.0];
-    var lightTarget = [0.0, 50.0, 0.0];
+    var lightTarget = [0.0, 0.0, 0.0];
 
-    cameraPos = lightPos;    
-    target = lightTarget;
+    //cameraPos = lightPos;    
+    //target = lightTarget;
 
     gl.uniform3f (directionUniformLocation, lightPos[0], lightPos[1], lightPos[2]);
     gl.uniform3f (viewPosition, cameraPos[0], cameraPos[1], cameraPos[2]);
@@ -477,6 +477,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         gl.useProgram(programInfo);
 
         viewMatrix = m4.inverse(viewMatrix);
+        lightView = m4.inverse(lightView);
 
         // set uniform locations
         gl.uniformMatrix4fv (matrixLocations.projection, false, projMatrix);
@@ -528,7 +529,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         // light world prolly not necissary
         //lightWorldMatrix = ;
         lightViewMatrix = m4.lookAt (lightPos, lightTarget, up);
-        lightProjMatrix = m4.orthographic (-10, 10, -10, 10, 0.5, 1000);
+        lightProjMatrix = m4.orthographic (-400, 400, -400, 400, 0.5, 1000);
 
         // for testing
         worldMatrix = m4.identity ();

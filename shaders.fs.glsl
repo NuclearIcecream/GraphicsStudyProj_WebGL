@@ -28,7 +28,7 @@ void main()
     // diffuse component
     vec3 lightDir = normalize(lightSourceDirection - v_FragPosition);
     float diff = max (dot (lightDir, surfNormal), 0.0);
-    vec3 diffuse = diff * lightColor * (0.15);
+    vec3 diffuse = diff * lightColor * 0.15;
 
     // specular component
     vec3 viewDir = normalize (viewPosition - v_FragPosition);
