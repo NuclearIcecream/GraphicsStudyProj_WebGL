@@ -28,7 +28,7 @@ void main()
     // diffuse component
     vec3 lightDir = normalize(lightSourceDirection - v_FragPosition);
     float diff = max (dot (lightDir, surfNormal), 0.0);
-    vec3 diffuse = diff * lightColor * 0.15;
+    vec3 diffuse = diff * lightColor * 0.5;
 
     // specular component
     vec3 viewDir = normalize (viewPosition - v_FragPosition);
@@ -46,8 +46,10 @@ void main()
     float closeDepthLight = texture (shadowMap, projCoords.xy).r;
     // get depth from current fragment
     float closeDepthFrag = projCoords.z;
+    // Bias value
+    float bias = max(0.05 * (1.0 - dot(surfNormal, lightDir)), 0.005);
     // check if current frag in shadow
-    float shadow = closeDepthFrag > closeDepthLight ? 1.0 : 0.0;
+    float shadow = closeDepthFrag -bias > closeDepthLight ? 1.0 : 0.0;
 
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
     outColor = vec4 (lighting, 1.0);
