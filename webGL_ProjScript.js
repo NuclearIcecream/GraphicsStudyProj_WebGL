@@ -98,8 +98,8 @@ var initEngine = function () {
 
     async function getAyaImage () {
         return new Promise ( (resolve, reject) => {
-            var image = new Image();
-            image.src = '091_W_Aya_2k_01.jpg'
+            var image = new Image()
+            image.src = '091_W_Aya_2K_01.jpg'
             image.onload = () => resolve (image)
             image.onerror = () => reject (new Error ("Could not reslove image"))
         })
@@ -318,6 +318,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     gl.pixelStorei (gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
     gl.generateMipmap (gl.TEXTURE_2D)
+
     
     // some render settings
     gl.enable(gl.CULL_FACE);
