@@ -42,6 +42,13 @@ void main()
     vec3 projCoords = v_FragPosLightSpace.xyz / v_FragPosLightSpace.w;
     // transform to 0,1 range
     projCoords = projCoords * 0.5 + 0.5;
+
+    bool inRange =
+        projCoords.x >= 0.0 &&
+        projCoords.x <= 1.0 &&
+        projCoords.y >= 0.0 &&
+        projCoords.y <= 1.0;
+
     // get depth from light perspec
     float closeDepthLight = texture (shadowMap, projCoords.xy).r;
     // get depth from current fragment
@@ -49,8 +56,12 @@ void main()
     // Bias value
     float bias = max(0.05 * (1.0 - dot(surfNormal, lightDir)), 0.005);
     // check if current frag in shadow
-    float shadow = closeDepthFrag -bias > closeDepthLight ? 1.0 : 0.0;
+    float shadow = closeDepthLight >= closeDepthFrag - bias ? 0.0 : 1.0;
 
+    if (inRange != true)
+    {
+        shadow = 0.0;
+    }
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
     outColor = vec4 (lighting, 1.0);
 }

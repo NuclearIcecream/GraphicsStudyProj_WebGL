@@ -529,7 +529,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         // light world prolly not necissary
         //lightWorldMatrix = ;
         lightViewMatrix = m4.lookAt (lightPos, lightTarget, up);
-        lightProjMatrix = m4.orthographic (-400, 400, -400, 400, 0.5, 1000);
+        lightProjMatrix = m4.orthographic (-150, 150, -150, 150, 0.5, 1000);
 
         // for testing
         worldMatrix = m4.identity ();
