@@ -241,6 +241,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     // * FLOOR buffer data *
     // *********************
     // Floor Vertices
+    // this is to patch
 {
     gl.bindBuffer (gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData (gl.ARRAY_BUFFER, new Float32Array(floorVertices), gl.STATIC_DRAW);
