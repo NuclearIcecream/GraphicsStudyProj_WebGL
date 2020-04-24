@@ -13,6 +13,7 @@ uniform vec3 lightSourceIntensity;
 uniform vec3 lightSourceDirection;
 uniform sampler2D diffuseSampler;
 uniform sampler2D shadowMap;
+uniform sampler2D cameraDepthSampler;
 
 out vec4 outColor;
 
