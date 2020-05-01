@@ -63,6 +63,18 @@ function objectMatrixTransform (viewProjMat, translateMat, rotationMat, scaleMat
     return matrix;
 }
 
+// inclusive random number function
+function getRndInteger(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) ) + min;
+  }
+
+// magnitude of 3D vector
+function vectorMagnitude (vector)
+{
+    var magnitude = Math.sqrt ((vector[0]*vector[0]) + (vector[1]*vector[1]) + (vector[2]*vector[2]))
+    return magnitude;
+}
+
 // This function just makes sure external data loads in correctly
 var initEngine = function () {
 
@@ -302,12 +314,17 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     /******************
      * texture stuff  *
      ******************/
-    // texture look up test
     var textureDiffLoc = gl.getUniformLocation (renderSceneProgram, "diffuseSampler");
     gl.uniform1i (textureDiffLoc, 0); // bind to 0
 
     var textureDepthLoc = gl.getUniformLocation (renderSceneProgram, "shadowMap");
     gl.uniform1i (textureDepthLoc, 1); // bind to 1
+
+    var textureCameraLoc = gl.getUniformLocation (renderSceneProgram, "cameraDepthSampler");
+    gl.uniform1i (textureCameraLoc, 2); // bind to 2
+
+    var textureAOLoc = gl.getUniformLocation (renderSceneProgram, "");
+    gl.uniform1i (textureAOLoc, 3); // bind to 3
 
     // AYA
     var whiteTexture = gl.createTexture ();
@@ -319,7 +336,6 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
     gl.generateMipmap (gl.TEXTURE_2D)
 
-    
     // some render settings
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -348,6 +364,69 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     // unbind the framebuffer
     gl.bindFramebuffer (gl.FRAMEBUFFER, null);
 
+    /*****************************
+     * SSAO Camera Depth Texture *
+     *****************************/
+    const cameraDepthTexture = gl.createTexture ();
+    const cameraTextureSize = 1024;
+    gl.activeTexture (gl.TEXTURE2);
+    gl.bindTexture (gl.TEXTURE_2D, cameraDepthTexture);
+    gl.texImage2D (gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT32F, cameraTextureSize,
+        cameraTextureSize, 0, gl.DEPTH_COMPONENT, gl.FLOAT, null);
+    gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    const cameraFrameBuffer = gl.createFramebuffer ();
+    gl.bindFramebuffer (gl.FRAMEBUFFER, cameraFrameBuffer);
+    gl.framebufferTexture2D (gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT,
+                            gl.TEXTURE_2D, cameraDepthTexture, 0);
+
+    gl.bindFramebuffer (gl.FRAMEBUFFER, null);
+
+    /******************************************************* 
+     * Generating the values for use in the offset texture *
+     *******************************************************/
+    var validNumberList = [];
+    var randomPoint = [0, 0, 0];
+    var vectorSize = 0.0;
+    var radius = 10;
+    var cap = 10;
+
+    while (validNumberList.length < cap)
+    {
+        // get three random values for x,y,z
+        
+        randomPoint[0] = getRndInteger (-1*radius, radius);
+        randomPoint[1] = getRndInteger (-1*radius, radius);
+        randomPoint[2] = getRndInteger (-1*radius, radius);
+
+        // get the magnitude of the vector of the values
+        vectorSize = vectorMagnitude (randomPoint);
+
+        // if values are good, save them to a list
+        if (vectorSize < radius)
+        {
+            validNumberList.push(randomPoint)
+        }
+
+        // reset the values
+        randomPoint = [0, 0, 0];
+        vectorSize = 0.0;
+    }
+
+    /*****************************
+     * Create the offset Texture *
+     *****************************/
+    /*
+    const offsetTextForAO = gl.createTexture ();
+    const offsetTextSize = cap;
+    gl.bindTexture (gl.TEXTURE3);
+    gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGBA, offsetTextSize, offsetTextSize,
+                    0, gl.UNSIGNED_BYTE, gl.Float32Array(validNumberList));
+    */
+
     /*************************
      *  END OF FUNNY SET-UPS *
      *************************/
@@ -363,7 +442,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     // some vars for Floor initial Transforms
     const floorUniforms = {
         texture: whiteTexture,
-        //texture: depthTexture,
+        //texture: cameraDepthTexture,
         translation: [0, 0, 0],
         rotation: [degToRad(0), degToRad(0), degToRad(0)],
         scale: [80, 10, 80]
@@ -407,7 +486,6 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     var viewMatrix = new Float32Array (16);
     var projMatrix = new Float32Array (16);
 
-    //var lightWorldMatrix = new Float32Array (16);
     var lightViewMatrix = new Float32Array (16);
     var lightProjMatrix = new Float32Array (16);
 
@@ -438,7 +516,6 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         // other
         lightView = m4.inverse (lightView);
        
-
         // set uniforms
         gl.uniformMatrix4fv (matrixLocations.lightProj, false, lightProj);
         gl.uniformMatrix4fv (matrixLocations.lightView, false, lightView);
@@ -448,12 +525,7 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         gl.bindVertexArray(ayaVAO);
         ayaTransforms = objectMatrixTransform (worldMatrix, ayaUniforms.translation, ayaUniforms.rotation, ayaUniforms.scale);
         gl.uniformMatrix4fv (matrixLocations.lightWorld, false, ayaTransforms);
-          
-        // do Aya Texture
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, ayaUniforms.texture);
         
-
         // execute GLSL program
         gl.drawElements(gl.TRIANGLES, ayaIndices.length, gl.UNSIGNED_SHORT, 0);
         // END OF AYA
@@ -463,10 +535,6 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         gl.bindVertexArray(floorVAO);
         floorTransforms = objectMatrixTransform (worldMatrix, floorUniforms.translation, floorUniforms.rotation, floorUniforms.scale);
         gl.uniformMatrix4fv(matrixLocations.lightWorld, false, floorTransforms);
-
-        // do floor texture
-        gl.activeTexture(gl.TEXTURE0)
-        gl.bindTexture(gl.TEXTURE_2D, floorUniforms.texture);
 
         // execute GLSL program
         gl.drawElements(gl.TRIANGLES, floorIndices.length, gl.UNSIGNED_SHORT, 0);
@@ -527,14 +595,10 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         /*********************
          * Render Shadow Map *
          *********************/
-
-        // light world prolly not necissary
-        //lightWorldMatrix = ;
         lightViewMatrix = m4.lookAt (lightPos, lightTarget, up);
         lightProjMatrix = m4.orthographic (-150, 150, -150, 150, 0.5, 1000);
 
-        // for testing
-        worldMatrix = m4.identity ();
+        //worldMatrix = m4.identity ();
 
         gl.bindFramebuffer (gl.FRAMEBUFFER, depthFramebuffer);
         gl.viewport(0, 0, depthTextureSize, depthTextureSize);
@@ -543,19 +607,31 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
         drawLightShadow (lightProjMatrix, lightViewMatrix, worldMatrix, renderLightProgram);        
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-        /**********************
-         * Render Camera View *
-         **********************/
-        // Convert from clipspace to pixels
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
+        /************************************
+         * Render Camera View & SSAO Texture*
+         ************************************/
+        // First the camera perspective depth texture
         // clear canvas
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
         worldMatrix = m4.identity ();
         viewMatrix = m4.lookAt (cameraPos, target, up);
-        projMatrix = m4.perspective (FOVRadians, aspect, 1, 2000);   
+        projMatrix = m4.perspective (FOVRadians, aspect, 1, 2000);  
         
+        gl.bindFramebuffer (gl.FRAMEBUFFER, cameraFrameBuffer);
+        gl.viewport (0, 0, cameraTextureSize, cameraTextureSize);
+        gl.clear (gl.DEPTH_BUFFER_BIT);
+
+        drawLightShadow (projMatrix, viewMatrix, worldMatrix, renderLightProgram);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+        // Now the real Render
+        // clear canvas
+        gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+        
+        // Convert from clipspace to pixels
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
         // send the shadow shader
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture (gl.TEXTURE_2D, depthTexture);

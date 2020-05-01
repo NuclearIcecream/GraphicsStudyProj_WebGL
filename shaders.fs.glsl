@@ -6,6 +6,7 @@ in vec3 v_FragPosition;
 in vec2 fragTexCoord;
 in vec3 v_Normal;
 in vec4 v_FragPosLightSpace;
+in vec3 v_OffsetPositions [25];
 
 uniform vec3 viewPosition;
 uniform vec3 ambientLightIntensity;
@@ -13,8 +14,64 @@ uniform vec3 lightSourceIntensity;
 uniform vec3 lightSourceDirection;
 uniform sampler2D diffuseSampler;
 uniform sampler2D shadowMap;
+uniform sampler2D cameraDepthSampler;
 
 out vec4 outColor;
+
+float AmbientOcclusionRatio ()
+{
+    // offsetPositions located in v_OffsetPositions
+    // fragment offset is v_Normal
+    // get other needed vars
+    float offsetsAboveNormal = 0.0;
+    float visibleOffsets = 0.0;
+
+    // get the points above the surface of the geometry
+    for (int i = 0; i < 50; i++) // for every single offset point
+    {
+        float result = dot(v_OffsetPositions[i], normalize(v_Normal));
+        if (result > 0.0)    // multiply by normal
+            offsetsAboveNormal++;                   // and count which have sum >0
+    }
+
+    // determine which offset points are actually visible with the cameraDepthTexture
+    for (int i = 0; i < 50; i++) // for every single offset point
+    {
+        // create the offsetPoint
+        vec3 cameraProjCoord = v_FragPosition;
+        cameraProjCoord.x = cameraProjCoord.x + v_OffsetPositions[i].x;
+        cameraProjCoord.y = cameraProjCoord.y + v_OffsetPositions[i].y;
+        cameraProjCoord.z = cameraProjCoord.z + v_OffsetPositions[i].z;
+
+        // adjust it to pixelSpace
+        cameraProjCoord = cameraProjCoord * 0.5 + 0.5;
+
+        // check if the point is valid
+        bool inRange =
+            cameraProjCoord.x >= 0.0 &&
+            cameraProjCoord.x <= 1.0 &&
+            cameraProjCoord.y >= 0.0 &&
+            cameraProjCoord.y <= 1.0;
+
+        if (inRange)    // If the point is valid...
+        {
+            // look up the point in the texture
+            float cameraDistToGeometry = texture(cameraDepthSampler, cameraProjCoord.xy).r;
+            
+            // get the offsetPoint depth
+            float depthOfPoint = cameraProjCoord.z;
+
+            // check if the offset is nearer to the camera than the texture z value
+            if (depthOfPoint < cameraDistToGeometry)    // if the offset point is nearer than the geometry...
+            {
+                visibleOffsets++;   // increment the counter
+            }
+        }
+    }
+
+    // then return the float value of truly visible over the maybe visible
+    return visibleOffsets/offsetsAboveNormal;
+}
 
 void main() 
 {
@@ -23,7 +80,8 @@ void main()
     vec3 lightColor = vec3(5.0);
 
     // ambient component
-    vec3 ambient = color * 0.15;
+    //vec3 ambient = color  * 0.15;
+    vec3 ambient = color * AmbientOcclusionRatio();
 
     // diffuse component
     vec3 lightDir = normalize(lightSourceDirection - v_FragPosition);
