@@ -323,6 +323,9 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     var textureCameraLoc = gl.getUniformLocation (renderSceneProgram, "cameraDepthSampler");
     gl.uniform1i (textureCameraLoc, 2); // bind to 2
 
+    var textureAOLoc = gl.getUniformLocation (renderSceneProgram, "");
+    gl.uniform1i (textureAOLoc, 3); // bind to 3
+
     // AYA
     var whiteTexture = gl.createTexture ();
     var img = new Image();
@@ -416,7 +419,13 @@ var runEngine = function(vertexShaderCode, fragmentShaderCode, shadowVSCode, sha
     /*****************************
      * Create the offset Texture *
      *****************************/
-    
+    /*
+    const offsetTextForAO = gl.createTexture ();
+    const offsetTextSize = cap;
+    gl.bindTexture (gl.TEXTURE3);
+    gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGBA, offsetTextSize, offsetTextSize,
+                    0, gl.UNSIGNED_BYTE, gl.Float32Array(validNumberList));
+    */
 
     /*************************
      *  END OF FUNNY SET-UPS *
